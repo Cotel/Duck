@@ -1,0 +1,4 @@
+rootProject.name = 'duck'
+include 'duck-core'
+include 'duck-samples'
+
