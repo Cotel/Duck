@@ -38,5 +38,5 @@ nbdist/
 .nb-gradle/
 
 ## Build
-./duck-core
-./duck-samples
+/duck-core
+/duck-samples
