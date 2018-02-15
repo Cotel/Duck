@@ -30,8 +30,3 @@ class Store(private val reducers: List<Duck> = emptyList()) {
                 .forEach { it.listen(state) }
     }
 }
-
-interface Subscriptor {
-    val store: Store
-    fun listen(newState: Map<String, Any>)
-}

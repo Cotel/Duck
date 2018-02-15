@@ -16,7 +16,7 @@ allprojects {
 }
 
 dependencies {
-    compile 'com.github.Cotel:Duck:v0.1.1'
+    compile 'com.github.Cotel:Duck:v0.1.2'
 }
 
 ```

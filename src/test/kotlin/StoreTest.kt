@@ -1,7 +1,4 @@
-import com.cotel.duck.Action
-import com.cotel.duck.Reducer
-import com.cotel.duck.Store
-import com.cotel.duck.Subscriptor
+import com.cotel.duck.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 
@@ -40,16 +37,18 @@ class StoreTest : StringSpec({
 
         testStore.dispatch(CounterActions.Increment)
         testStore.dispatch(CounterActions.Increment)
+        testStore.dispatch(CounterActions.IncrementBy(2))
         testStore.dispatch(CounterActions.Decrement)
 
-        currentCounter shouldBe 1
-        currentWord shouldBe "a"
+        currentCounter shouldBe 3
+        currentWord shouldBe "aaa"
     }
 
 })
 
 sealed class CounterActions : Action {
     object Increment : CounterActions()
+    class IncrementBy(override val payload: Int) : CounterActions(), PayloadAction<Int>
     object Decrement : CounterActions()
     object Reset : CounterActions()
 }
@@ -61,6 +60,7 @@ class CounterReducer : Reducer<Int, CounterActions> {
 
     override fun reduce(state: Int, action: CounterActions): Int = when (action) {
         CounterActions.Increment -> state + 1
+        is CounterActions.IncrementBy -> state + action.payload
         CounterActions.Decrement -> state - 1
         CounterActions.Reset -> 0
     }
@@ -73,6 +73,7 @@ class StringReducer : Reducer<String, CounterActions> {
 
     override fun reduce(state: String, action: CounterActions): String = when (action) {
         CounterActions.Increment -> state + "a"
+        is CounterActions.IncrementBy -> state + "a".repeat(action.payload)
         CounterActions.Decrement -> state.drop(1)
         CounterActions.Reset -> ""
     }
