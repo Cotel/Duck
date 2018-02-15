@@ -1,3 +1,7 @@
+import com.cotel.duck.Action
+import com.cotel.duck.Reducer
+import com.cotel.duck.Store
+import com.cotel.duck.Subscriptor
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 

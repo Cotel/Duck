@@ -1,3 +1,5 @@
+package com.cotel.duck
+
 class Store(private val reducers: List<Duck> = emptyList()) {
 
     private var state: Map<String, Any>

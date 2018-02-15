@@ -1,3 +1,5 @@
+package com.cotel.duck
+
 interface Duck
 
 interface Reducer<S, in A: Action> : Duck {
