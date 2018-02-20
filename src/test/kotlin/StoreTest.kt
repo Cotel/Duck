@@ -1,6 +1,8 @@
 import com.cotel.duck.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
+import java.time.Duration
+import kotlin.concurrent.thread
 
 class StoreTest : StringSpec({
     "Store should notify subscriptors on state change" {
@@ -8,7 +10,7 @@ class StoreTest : StringSpec({
         val subscriptor = object : Subscriptor {
             override val store: Store = testStore
 
-            override fun listen(newState: Map<String, Any>) {
+            override fun onStateChanged() {
                 timesCalled++
             }
         }
@@ -23,25 +25,39 @@ class StoreTest : StringSpec({
     }
 
     "Store reducers should update if they share actions" {
-        var currentCounter = 0
-        var currentWord = ""
-        val subscriptor = object : Subscriptor {
-            override val store: Store = testStore
-
-            override fun listen(newState: Map<String, Any>) {
-                currentCounter = newState["counter"] as Int
-                currentWord = newState["word"] as String
-            }
-        }
-        testStore.subscribe(subscriptor)
-
         testStore.dispatch(CounterActions.Increment)
         testStore.dispatch(CounterActions.Increment)
         testStore.dispatch(CounterActions.IncrementBy(2))
         testStore.dispatch(CounterActions.Decrement)
 
-        currentCounter shouldBe 3
-        currentWord shouldBe "aaa"
+        testStore.state["counter"] shouldBe 3
+        testStore.state["word"] shouldBe "aaa"
+    }
+
+    "Store middleware can modify actions" {
+        val enhancedTestStore = Store(setOf(
+            CounterReducer()
+        ))
+        val middleware = PayloadIncrementMiddleware(PayloadIncrementMiddleware(BaseMiddleware(enhancedTestStore)))
+        enhancedTestStore.setMiddleWareChain(middleware)
+
+        enhancedTestStore.dispatch(CounterActions.Increment)
+
+        enhancedTestStore.state["counter"] shouldBe 3
+    }
+
+    "Store middlewares can dispatch asynchronous actions" {
+        val enhancedTestStore = Store(setOf(
+                CounterReducer()
+        ))
+        val middleware = PauseMiddleware(BaseMiddleware(enhancedTestStore))
+        enhancedTestStore.setMiddleWareChain(middleware)
+
+        enhancedTestStore.dispatch(CounterActions.Increment)
+
+        enhancedTestStore.state["counter"] shouldBe 0
+        Thread.sleep(Duration.ofSeconds(4).toMillis())
+        enhancedTestStore.state["counter"] shouldBe 1
     }
 
 })
@@ -79,7 +95,27 @@ class StringReducer : Reducer<String, CounterActions> {
     }
 }
 
-val testStore = Store(listOf(
+class PayloadIncrementMiddleware(override val next: Dispatcher) : Middleware {
+    override fun dispatch(action: Action) {
+        when (action) {
+            CounterActions.Increment -> next.dispatch(CounterActions.IncrementBy(2))
+            is CounterActions.IncrementBy -> next.dispatch(CounterActions.IncrementBy(action.payload + 1))
+            else -> next.dispatch(action)
+        }
+    }
+}
+
+class PauseMiddleware(override val next: Dispatcher) : Middleware {
+    override fun dispatch(action: Action) {
+        next.dispatch(CounterActions.IncrementBy(0))
+        thread(start = true) {
+            Thread.sleep(Duration.ofSeconds(3).toMillis())
+            next.dispatch(action)
+        }
+    }
+}
+
+val testStore = Store(setOf(
         CounterReducer(),
         StringReducer()
 ))

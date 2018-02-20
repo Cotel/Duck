@@ -1,15 +1,28 @@
 package com.cotel.duck
 
-class Store(private val reducers: List<Duck> = emptyList()) {
+interface Dispatcher {
+    fun dispatch(action: Action)
+}
 
-    private var state: Map<String, Any>
+class Store(private val reducers: Set<Duck>) : Dispatcher {
+
+    lateinit private var middlewareChain: Middleware
     private val subscribers: MutableCollection<Subscriptor> = mutableListOf()
 
+    var state: Map<String, Any>
+        private set
+
     init {
+        middlewareChain = BaseMiddleware(this)
+
         state = reducers
                 .map { it as Reducer<Any, Action> }
                 .map { Pair(it.identifier, it.initialState) }
                 .toMap()
+    }
+
+    fun setMiddleWareChain(middleware: Middleware) {
+        middlewareChain = middleware
     }
 
     fun subscribe(sub: Subscriptor) {
@@ -20,13 +33,17 @@ class Store(private val reducers: List<Duck> = emptyList()) {
         subscribers.remove(sub)
     }
 
-    fun dispatch(action: Action) {
+    override fun dispatch(action: Action) {
+        middlewareChain!!.dispatch(action)
+    }
+
+    internal fun reduceAction(action: Action) {
         state = reducers
                 .map { it as Reducer<Any, Action> }
                 .map { Pair(it.identifier, it.reduce(state[it.identifier]!!, action)) }
                 .toMap()
 
         subscribers
-                .forEach { it.listen(state) }
+                .forEach { it.onStateChanged() }
     }
 }
