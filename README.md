@@ -2,6 +2,10 @@
 
 ### A Redux implementation in Kotlin
 
+[![](https://jitpack.io/v/Cotel/Duck.svg)](https://jitpack.io/#Cotel/Duck)
+[![CircleCI](https://circleci.com/gh/Cotel/Duck/tree/master.svg?style=svg)](https://circleci.com/gh/Cotel/Duck/tree/master)
+
+
 #### Quick start
 
 Add this to your _build.gradle_
